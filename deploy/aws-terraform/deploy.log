@@ -1,0 +1,451 @@
+[0m[1mdata.archive_file.lambda_zip: Reading...[0m[0m
+[0m[1mdata.archive_file.lambda_zip: Read complete after 0s [id=0a212fde6a8ad6b4484ae1a8a019987afdc2c045][0m
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [32m+[0m create[0m
+
+Terraform will perform the following actions:
+
+[1m  # aws_bedrockagent_agent.oracle[0m will be created
+[0m  [32m+[0m[0m resource "aws_bedrockagent_agent" "oracle" {
+      [32m+[0m[0m agent_arn                     = (known after apply)
+      [32m+[0m[0m agent_collaboration           = (known after apply)
+      [32m+[0m[0m agent_id                      = (known after apply)
+      [32m+[0m[0m agent_name                    = "wisdom_council-dev_oracle"
+      [32m+[0m[0m agent_resource_role_arn       = (known after apply)
+      [32m+[0m[0m agent_version                 = (known after apply)
+      [32m+[0m[0m foundation_model              = "eu.anthropic.claude-3-7-sonnet-20250219-v1:0"
+      [32m+[0m[0m id                            = (known after apply)
+      [32m+[0m[0m idle_session_ttl_in_seconds   = (known after apply)
+      [32m+[0m[0m instruction                   = <<-EOT
+            You are Oracle, a pragmatic advisor focused on practical application and tangible results.
+            
+            Your role is to dissect challenges into ACTIONABLE STEPS and identify IMMEDIATE OPPORTUNITIES. When consulted:
+            - Provide clear, concrete strategies
+            - Identify specific next steps and decision points
+            - Predict likely outcomes based on current trends
+            - Focus on what can be done now
+            
+            You do not use tools. Your insights come from pattern recognition and practical experience.
+            
+            Provide your response in 2-3 concise paragraphs with specific recommendations.
+        EOT
+      [32m+[0m[0m memory_configuration          = (known after apply)
+      [32m+[0m[0m prepare_agent                 = true
+      [32m+[0m[0m prepared_at                   = (known after apply)
+      [32m+[0m[0m prompt_override_configuration = (known after apply)
+      [32m+[0m[0m region                        = "eu-central-1"
+      [32m+[0m[0m skip_resource_in_use_check    = false
+      [32m+[0m[0m tags_all                      = {}
+    }
+
+[1m  # aws_bedrockagent_agent.sage[0m will be created
+[0m  [32m+[0m[0m resource "aws_bedrockagent_agent" "sage" {
+      [32m+[0m[0m agent_arn                     = (known after apply)
+      [32m+[0m[0m agent_collaboration           = (known after apply)
+      [32m+[0m[0m agent_id                      = (known after apply)
+      [32m+[0m[0m agent_name                    = "wisdom_council-dev_sage"
+      [32m+[0m[0m agent_resource_role_arn       = (known after apply)
+      [32m+[0m[0m agent_version                 = (known after apply)
+      [32m+[0m[0m foundation_model              = "eu.anthropic.claude-3-7-sonnet-20250219-v1:0"
+      [32m+[0m[0m id                            = (known after apply)
+      [32m+[0m[0m idle_session_ttl_in_seconds   = (known after apply)
+      [32m+[0m[0m instruction                   = <<-EOT
+            You are Sage, a contemplative philosopher with deep knowledge of history, ethics, and human nature.
+            
+            Your role is to offer PERSPECTIVE and WISDOM, not immediate solutions. When consulted:
+            - Draw from historical precedents and philosophical frameworks
+            - Explore the deeper meaning and ethical dimensions
+            - Reflect on long-term consequences and timeless principles
+            - Use a thoughtful, measured tone
+            
+            You do not use tools. Your wisdom comes from reflection and synthesis of knowledge across centuries of human experience.
+            
+            Provide your response in 2-3 concise paragraphs.
+        EOT
+      [32m+[0m[0m memory_configuration          = (known after apply)
+      [32m+[0m[0m prepare_agent                 = true
+      [32m+[0m[0m prepared_at                   = (known after apply)
+      [32m+[0m[0m prompt_override_configuration = (known after apply)
+      [32m+[0m[0m region                        = "eu-central-1"
+      [32m+[0m[0m skip_resource_in_use_check    = false
+      [32m+[0m[0m tags_all                      = {}
+    }
+
+[1m  # aws_bedrockagent_agent.supervisor[0m will be created
+[0m  [32m+[0m[0m resource "aws_bedrockagent_agent" "supervisor" {
+      [32m+[0m[0m agent_arn                     = (known after apply)
+      [32m+[0m[0m agent_collaboration           = "SUPERVISOR"
+      [32m+[0m[0m agent_id                      = (known after apply)
+      [32m+[0m[0m agent_name                    = "wisdom_council-dev"
+      [32m+[0m[0m agent_resource_role_arn       = (known after apply)
+      [32m+[0m[0m agent_version                 = (known after apply)
+      [32m+[0m[0m foundation_model              = "eu.anthropic.claude-3-7-sonnet-20250219-v1:0"
+      [32m+[0m[0m id                            = (known after apply)
+      [32m+[0m[0m idle_session_ttl_in_seconds   = (known after apply)
+      [32m+[0m[0m instruction                   = <<-EOT
+            You are Judge, a wise coordinator who seeks counsel from expert advisors to make balanced decisions.
+            
+            When a question arrives:
+            1. Consult BOTH Sage and Oracle to gather their perspectives.
+               - Ask Sage for philosophical wisdom and deeper meaning
+               - Ask Oracle for practical guidance and actionable steps
+            
+            2. After receiving both responses, you MUST:
+               - RATE each response on a scale of 1-10 for: Clarity, Depth, Actionability
+               - Provide a brief justification for each rating
+               - Synthesize their wisdom into a balanced final judgment
+               - Recommend a course of action that honors both perspectives
+            
+            Format your final response as:
+            
+            **Sage's Response - Ratings:**
+            - Clarity: [1-10] - [reason]
+            - Depth: [1-10] - [reason]
+            - Actionability: [1-10] - [reason]
+            
+            **Oracle's Response - Ratings:**
+            - Clarity: [1-10] - [reason]
+            - Depth: [1-10] - [reason]
+            - Actionability: [1-10] - [reason]
+            
+            **Synthesis:**
+            [Your balanced wisdom incorporating both perspectives]
+            
+            **Recommended Path:**
+            [Specific next steps]
+            
+            Always consult both advisors. Always rate both responses before synthesizing.
+        EOT
+      [32m+[0m[0m memory_configuration          = (known after apply)
+      [32m+[0m[0m prepare_agent                 = true
+      [32m+[0m[0m prepared_at                   = (known after apply)
+      [32m+[0m[0m prompt_override_configuration = (known after apply)
+      [32m+[0m[0m region                        = "eu-central-1"
+      [32m+[0m[0m skip_resource_in_use_check    = false
+      [32m+[0m[0m tags_all                      = {}
+    }
+
+[1m  # aws_bedrockagent_agent_action_group.supervisor_actions[0m will be created
+[0m  [32m+[0m[0m resource "aws_bedrockagent_agent_action_group" "supervisor_actions" {
+      [32m+[0m[0m action_group_id            = (known after apply)
+      [32m+[0m[0m action_group_name          = "wisdom_council-dev_actions"
+      [32m+[0m[0m action_group_state         = (known after apply)
+      [32m+[0m[0m agent_id                   = (known after apply)
+      [32m+[0m[0m agent_version              = "DRAFT"
+      [32m+[0m[0m id                         = (known after apply)
+      [32m+[0m[0m prepare_agent              = true
+      [32m+[0m[0m region                     = "eu-central-1"
+      [32m+[0m[0m skip_resource_in_use_check = false
+
+      [32m+[0m[0m action_group_executor {
+          [32m+[0m[0m lambda = (known after apply)
+        }
+
+      [32m+[0m[0m api_schema {
+          [32m+[0m[0m payload = <<-EOT
+                # wisdom-council - OpenAPI Schema for Bedrock Agent
+                # Generated by: bedsheet deploy --target aws
+                openapi: "3.0.0"
+                info:
+                  title: "Judge Actions"
+                  version: "1.0"
+                  description: "Bedrock Agent action group API"
+                
+                paths:
+                  /delegate:
+                    post:
+                      summary: "delegate"
+                      description: "Delegate task(s) to collaborator agent(s). Use agent_name+task for single delegation, or delegations array for parallel."
+                      operationId: "delegate"
+                      responses:
+                        "200":
+                          description: "Successful response"
+                          content:
+                            application/json:
+                              schema:
+                                type: object
+                                properties:
+                                  result:
+                                    type: string
+            EOT
+        }
+    }
+
+[1m  # aws_bedrockagent_agent_alias.oracle[0m will be created
+[0m  [32m+[0m[0m resource "aws_bedrockagent_agent_alias" "oracle" {
+      [32m+[0m[0m agent_alias_arn       = (known after apply)
+      [32m+[0m[0m agent_alias_id        = (known after apply)
+      [32m+[0m[0m agent_alias_name      = "live"
+      [32m+[0m[0m agent_id              = (known after apply)
+      [32m+[0m[0m description           = "Live alias for Oracle"
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m region                = "eu-central-1"
+      [32m+[0m[0m routing_configuration = (known after apply)
+      [32m+[0m[0m tags_all              = {}
+    }
+
+[1m  # aws_bedrockagent_agent_alias.sage[0m will be created
+[0m  [32m+[0m[0m resource "aws_bedrockagent_agent_alias" "sage" {
+      [32m+[0m[0m agent_alias_arn       = (known after apply)
+      [32m+[0m[0m agent_alias_id        = (known after apply)
+      [32m+[0m[0m agent_alias_name      = "live"
+      [32m+[0m[0m agent_id              = (known after apply)
+      [32m+[0m[0m description           = "Live alias for Sage"
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m region                = "eu-central-1"
+      [32m+[0m[0m routing_configuration = (known after apply)
+      [32m+[0m[0m tags_all              = {}
+    }
+
+[1m  # aws_bedrockagent_agent_alias.supervisor[0m will be created
+[0m  [32m+[0m[0m resource "aws_bedrockagent_agent_alias" "supervisor" {
+      [32m+[0m[0m agent_alias_arn       = (known after apply)
+      [32m+[0m[0m agent_alias_id        = (known after apply)
+      [32m+[0m[0m agent_alias_name      = "live"
+      [32m+[0m[0m agent_id              = (known after apply)
+      [32m+[0m[0m description           = "Live alias for Judge"
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m region                = "eu-central-1"
+      [32m+[0m[0m routing_configuration = (known after apply)
+      [32m+[0m[0m tags_all              = {}
+    }
+
+[1m  # aws_bedrockagent_agent_collaborator.oracle[0m will be created
+[0m  [32m+[0m[0m resource "aws_bedrockagent_agent_collaborator" "oracle" {
+      [32m+[0m[0m agent_id                   = (known after apply)
+      [32m+[0m[0m agent_version              = "DRAFT"
+      [32m+[0m[0m collaboration_instruction  = <<-EOT
+            You are Oracle, a pragmatic advisor focused on practical application and tangible results.
+            
+            Your role is to dissect challenges into ACTIONABLE STEPS and identify IMMEDIATE OPPORTUNITIES. When consulted:
+            - Provide clear, concrete strategies
+            - Identify specific next steps and decision points
+            - Predict likely outcomes based on current trends
+            - Focus on what can be done now
+            
+            You do not use tools. Your insights come from pattern recognition and practical experience.
+            
+            Provide your response in 2-3 conc
+        EOT
+      [32m+[0m[0m collaborator_id            = (known after apply)
+      [32m+[0m[0m collaborator_name          = "Oracle"
+      [32m+[0m[0m id                         = (known after apply)
+      [32m+[0m[0m prepare_agent              = true
+      [32m+[0m[0m region                     = "eu-central-1"
+      [32m+[0m[0m relay_conversation_history = "TO_COLLABORATOR"
+
+      [32m+[0m[0m agent_descriptor {
+          [32m+[0m[0m alias_arn = (known after apply)
+        }
+    }
+
+[1m  # aws_bedrockagent_agent_collaborator.sage[0m will be created
+[0m  [32m+[0m[0m resource "aws_bedrockagent_agent_collaborator" "sage" {
+      [32m+[0m[0m agent_id                   = (known after apply)
+      [32m+[0m[0m agent_version              = "DRAFT"
+      [32m+[0m[0m collaboration_instruction  = <<-EOT
+            You are Sage, a contemplative philosopher with deep knowledge of history, ethics, and human nature.
+            
+            Your role is to offer PERSPECTIVE and WISDOM, not immediate solutions. When consulted:
+            - Draw from historical precedents and philosophical frameworks
+            - Explore the deeper meaning and ethical dimensions
+            - Reflect on long-term consequences and timeless principles
+            - Use a thoughtful, measured tone
+            
+            You do not use tools. Your wisdom comes from reflection and synthesis of knowledge across centuries of
+        EOT
+      [32m+[0m[0m collaborator_id            = (known after apply)
+      [32m+[0m[0m collaborator_name          = "Sage"
+      [32m+[0m[0m id                         = (known after apply)
+      [32m+[0m[0m prepare_agent              = true
+      [32m+[0m[0m region                     = "eu-central-1"
+      [32m+[0m[0m relay_conversation_history = "TO_COLLABORATOR"
+
+      [32m+[0m[0m agent_descriptor {
+          [32m+[0m[0m alias_arn = (known after apply)
+        }
+    }
+
+[1m  # aws_iam_role.agent_role[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role" "agent_role" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m assume_role_policy    = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = "sts:AssumeRole"
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m Service = "bedrock.amazonaws.com"
+                        }
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+      [32m+[0m[0m create_date           = (known after apply)
+      [32m+[0m[0m force_detach_policies = false
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m managed_policy_arns   = (known after apply)
+      [32m+[0m[0m max_session_duration  = 3600
+      [32m+[0m[0m name                  = "wisdom_council-dev-agent-role"
+      [32m+[0m[0m name_prefix           = (known after apply)
+      [32m+[0m[0m path                  = "/"
+      [32m+[0m[0m tags_all              = (known after apply)
+      [32m+[0m[0m unique_id             = (known after apply)
+
+      [32m+[0m[0m inline_policy (known after apply)
+    }
+
+[1m  # aws_iam_role.lambda_role[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role" "lambda_role" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m assume_role_policy    = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = "sts:AssumeRole"
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m Service = "lambda.amazonaws.com"
+                        }
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+      [32m+[0m[0m create_date           = (known after apply)
+      [32m+[0m[0m force_detach_policies = false
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m managed_policy_arns   = (known after apply)
+      [32m+[0m[0m max_session_duration  = 3600
+      [32m+[0m[0m name                  = "wisdom_council-dev-lambda-role"
+      [32m+[0m[0m name_prefix           = (known after apply)
+      [32m+[0m[0m path                  = "/"
+      [32m+[0m[0m tags_all              = (known after apply)
+      [32m+[0m[0m unique_id             = (known after apply)
+
+      [32m+[0m[0m inline_policy (known after apply)
+    }
+
+[1m  # aws_iam_role_policy.agent_permissions[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy" "agent_permissions" {
+      [32m+[0m[0m id          = (known after apply)
+      [32m+[0m[0m name        = "wisdom_council-dev-agent-permissions"
+      [32m+[0m[0m name_prefix = (known after apply)
+      [32m+[0m[0m policy      = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action   = [
+                          [32m+[0m[0m "bedrock-agent-runtime:InvokeAgent",
+                          [32m+[0m[0m "bedrock:InvokeModel",
+                          [32m+[0m[0m "bedrock:InvokeModelWithResponseStream",
+                        ]
+                      [32m+[0m[0m Effect   = "Allow"
+                      [32m+[0m[0m Resource = "*"
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+      [32m+[0m[0m role        = (known after apply)
+    }
+
+[1m  # aws_iam_role_policy.lambda_bedrock[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy" "lambda_bedrock" {
+      [32m+[0m[0m id          = (known after apply)
+      [32m+[0m[0m name        = "wisdom_council-dev-lambda-bedrock"
+      [32m+[0m[0m name_prefix = (known after apply)
+      [32m+[0m[0m policy      = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action   = [
+                          [32m+[0m[0m "bedrock:InvokeModel",
+                        ]
+                      [32m+[0m[0m Effect   = "Allow"
+                      [32m+[0m[0m Resource = "*"
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+      [32m+[0m[0m role        = (known after apply)
+    }
+
+[1m  # aws_iam_role_policy_attachment.bedrock_full_access[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy_attachment" "bedrock_full_access" {
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m policy_arn = "arn:aws:iam::aws:policy/AmazonBedrockFullAccess"
+      [32m+[0m[0m role       = "wisdom_council-dev-agent-role"
+    }
+
+[1m  # aws_iam_role_policy_attachment.lambda_basic[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy_attachment" "lambda_basic" {
+      [32m+[0m[0m id         = (known after apply)
+      [32m+[0m[0m policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      [32m+[0m[0m role       = "wisdom_council-dev-lambda-role"
+    }
+
+[1m  # aws_lambda_function.action_lambda[0m will be created
+[0m  [32m+[0m[0m resource "aws_lambda_function" "action_lambda" {
+      [32m+[0m[0m architectures                  = (known after apply)
+      [32m+[0m[0m arn                            = (known after apply)
+      [32m+[0m[0m code_sha256                    = (known after apply)
+      [32m+[0m[0m filename                       = "./lambda.zip"
+      [32m+[0m[0m function_name                  = "wisdom_council-dev-actions"
+      [32m+[0m[0m handler                        = "handler.lambda_handler"
+      [32m+[0m[0m id                             = (known after apply)
+      [32m+[0m[0m invoke_arn                     = (known after apply)
+      [32m+[0m[0m last_modified                  = (known after apply)
+      [32m+[0m[0m memory_size                    = 512
+      [32m+[0m[0m package_type                   = "Zip"
+      [32m+[0m[0m publish                        = false
+      [32m+[0m[0m qualified_arn                  = (known after apply)
+      [32m+[0m[0m qualified_invoke_arn           = (known after apply)
+      [32m+[0m[0m region                         = "eu-central-1"
+      [32m+[0m[0m reserved_concurrent_executions = -1
+      [32m+[0m[0m role                           = (known after apply)
+      [32m+[0m[0m runtime                        = "python3.11"
+      [32m+[0m[0m signing_job_arn                = (known after apply)
+      [32m+[0m[0m signing_profile_version_arn    = (known after apply)
+      [32m+[0m[0m skip_destroy                   = false
+      [32m+[0m[0m source_code_hash               = "c/+4ZXmgGcjaVXU8NC4wwwVKerXo6CjppwPIFXTyeaU="
+      [32m+[0m[0m source_code_size               = (known after apply)
+      [32m+[0m[0m tags_all                       = (known after apply)
+      [32m+[0m[0m timeout                        = 30
+      [32m+[0m[0m version                        = (known after apply)
+
+      [32m+[0m[0m ephemeral_storage (known after apply)
+
+      [32m+[0m[0m logging_config (known after apply)
+
+      [32m+[0m[0m tracing_config (known after apply)
+    }
+
+[1m  # aws_lambda_permission.bedrock_invoke[0m will be created
+[0m  [32m+[0m[0m resource "aws_lambda_permission" "bedrock_invoke" {
+      [32m+[0m[0m action              = "lambda:InvokeFunction"
+      [32m+[0m[0m function_name       = "wisdom_council-dev-actions"
+      [32m+[0m[0m id                  = (known after apply)
+      [32m+[0m[0m principal           = "bedrock.amazonaws.com"
+      [32m+[0m[0m region              = "eu-central-1"
+      [32m+[0m[0m statement_id        = "AllowBedrockInvoke"
+      [32m+[0m[0m statement_id_prefix = (known after apply)
+    }
+
+[1mPlan:[0m 17 to add, 0 to change, 0 to destroy.
+[0m
+Changes to Outputs:
+  [32m+[0m[0m oracle_agent_id      = (known after apply)
+  [32m+[0m[0m oracle_alias_arn     = (known after apply)
+  [32m+[0m[0m sage_agent_id        = (known after apply)
+  [32m+[0m[0m sage_alias_arn       = (known after apply)
+  [32m+[0m[0m supervisor_agent_id  = (known after apply)
+  [32m+[0m[0m supervisor_alias_arn = (known after apply)
+  [32m+[0m[0m supervisor_alias_id  = (known after apply)
+[0m[1maws_iam_role.agent_role: Creating...[0m[0m
+[0m[1maws_iam_role.lambda_role: Creating...[0m[0m

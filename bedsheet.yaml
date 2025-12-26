@@ -1,0 +1,21 @@
+version: "1.0"
+name: wisdom-council
+target: aws-terraform
+
+agents:
+  # Only list the supervisor - collaborators (Sage, Oracle) are auto-detected via introspection
+  - name: Judge
+    module: agents.judge
+    class_name: judge
+    description: Supervisor who consults Sage and Oracle, rates responses, and synthesizes judgment
+
+targets:
+  aws:
+    region: eu-central-1
+    lambda_memory: 512
+    bedrock_model: eu.anthropic.claude-sonnet-4-5-20250929-v1:0
+  aws-terraform:
+    region: eu-central-1
+    lambda_memory: 512
+    bedrock_model: eu.anthropic.claude-sonnet-4-5-20250929-v1:0
+    enable_delegate_for_supervisors: true  # Enable delegate for synthesis thinking
