@@ -40,6 +40,70 @@ def get_bedrock_client():
     return boto3.client('bedrock-agent-runtime', region_name=REGION)
 
 
+def extract_thinking_from_raw_response(raw_response: dict) -> list[str]:
+    """
+    Extract all thinking/reasoning content from modelInvocationOutput.rawResponse.
+
+    Bedrock stores thinking in multiple places within the raw response:
+    1. reasoningContent.reasoningText.text - Extended thinking blocks
+    2. Leading text blocks before toolUse - Pre-action reasoning
+
+    Args:
+        raw_response: The rawResponse dict from modelInvocationOutput
+
+    Returns:
+        List of thinking text strings found in the response
+    """
+    thinking_texts = []
+
+    if 'content' not in raw_response:
+        return thinking_texts
+
+    try:
+        # The content is a JSON string that needs to be parsed
+        content_str = raw_response['content']
+        if isinstance(content_str, str):
+            content_data = json.loads(content_str)
+        else:
+            content_data = content_str
+
+        # Navigate to the message content array
+        # Structure: {"output": {"message": {"content": [...]}}}
+        message_content = (
+            content_data.get('output', {})
+            .get('message', {})
+            .get('content', [])
+        )
+
+        if not isinstance(message_content, list):
+            return thinking_texts
+
+        for block in message_content:
+            if not isinstance(block, dict):
+                continue
+
+            # Source 1: Plain text blocks (often contain thinking before tool calls)
+            if block.get('text') and not block.get('toolUse'):
+                text = block['text'].strip()
+                if text:
+                    thinking_texts.append(text)
+
+            # Source 2: reasoningContent.reasoningText.text (extended thinking)
+            reasoning_content = block.get('reasoningContent')
+            if reasoning_content and isinstance(reasoning_content, dict):
+                reasoning_text = reasoning_content.get('reasoningText', {})
+                if isinstance(reasoning_text, dict) and reasoning_text.get('text'):
+                    text = reasoning_text['text'].strip()
+                    if text:
+                        thinking_texts.append(text)
+
+    except (json.JSONDecodeError, TypeError, KeyError) as e:
+        # Log but don't fail - raw response parsing is best-effort
+        pass
+
+    return thinking_texts
+
+
 async def stream_bedrock_events(
     message: str,
     session_id: str
@@ -91,11 +155,21 @@ async def stream_bedrock_events(
                 if 'orchestrationTrace' in trace:
                     orch = trace['orchestrationTrace']
 
-                    # Rationale (agent reasoning)
+                    # Source 1: Rationale field (agent reasoning - most common)
                     if 'rationale' in orch:
                         rationale = orch['rationale']
                         if 'text' in rationale:
                             yield f"data: {json.dumps({'type': 'thinking', 'content': rationale['text'], 'agent_id': agent_id})}\n\n"
+
+                    # Sources 2 & 3: Extract thinking from modelInvocationOutput.rawResponse
+                    # This captures: reasoningContent.reasoningText.text AND leading text blocks
+                    if 'modelInvocationOutput' in orch:
+                        model_output = orch['modelInvocationOutput']
+                        if 'rawResponse' in model_output:
+                            raw_response = model_output['rawResponse']
+                            thinking_texts = extract_thinking_from_raw_response(raw_response)
+                            for thinking_text in thinking_texts:
+                                yield f"data: {json.dumps({'type': 'thinking', 'content': thinking_text, 'agent_id': agent_id, 'source': 'raw_response'})}\n\n"
 
                     # Check for sub-agent collaborator invocation
                     if 'invocationInput' in orch:
