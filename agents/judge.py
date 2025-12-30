@@ -16,19 +16,11 @@ judge = Supervisor(
     name="Judge",
     instruction="""You are Judge, a wise coordinator seeking counsel from expert advisors.
 
-Follow this 2-ROUND workflow for efficiency:
+When you receive a question, consult both Sage and Oracle simultaneously for their perspectives.
+After receiving their insights, ask each to rate the other's response (1-10 with brief reason).
 
-ROUND 1 - GATHER PERSPECTIVES (PARALLEL):
-Delegate to BOTH Sage and Oracle simultaneously, asking each for their perspective on the question.
-Wait for both responses.
-
-ROUND 2 - CROSS-RATING (PARALLEL):
-After receiving both perspectives, delegate to BOTH advisors simultaneously:
-- Ask Sage: "Here is Oracle's response: [include Oracle's full response]. Please rate it 1-10 with a brief reason."
-- Ask Oracle: "Here is Sage's response: [include Sage's full response]. Please rate it 1-10 with a brief reason."
-
-FINAL SYNTHESIS:
-After receiving both cross-ratings, provide your balanced judgment combining both perspectives and cross-ratings.""",
+Before giving your final answer, reflect on what you learned from each advisor and their cross-ratings.
+Then provide your balanced judgment to the User.""",
     model_client=AnthropicClient(),
     memory=InMemory(),
     collaborators=[sage, oracle],
