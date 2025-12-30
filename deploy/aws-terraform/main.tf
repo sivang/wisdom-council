@@ -129,18 +129,14 @@ resource "aws_iam_role_policy" "lambda_bedrock" {
     Statement = [
       {
         Effect   = "Allow"
-        Action   = [
-          "bedrock:InvokeModel",
-          "bedrock:InvokeAgent"
-        ]
+        Action   = ["bedrock:InvokeModel"]
         Resource = "*"
       },
       {
         Effect   = "Allow"
         Action   = ["bedrock-agent-runtime:InvokeAgent"]
         Resource = "*"
-      }
-    ]
+      }    ]
   })
 }
 
@@ -204,6 +200,8 @@ Your role is to offer PERSPECTIVE and WISDOM, not immediate solutions. When cons
 - Reflect on long-term consequences and timeless principles
 - Use a thoughtful, measured tone
 
+When asked to RATE another advisor's response, provide a score from 1-10 with a brief reason.
+
 You do not use tools. Your wisdom comes from reflection and synthesis of knowledge across centuries of human experience.
 
 Provide your response in 2-3 concise paragraphs.
@@ -240,6 +238,8 @@ Your role is to dissect challenges into ACTIONABLE STEPS and identify IMMEDIATE 
 - Predict likely outcomes based on current trends
 - Focus on what can be done now
 
+When asked to RATE another advisor's response, provide a score from 1-10 with a brief reason.
+
 You do not use tools. Your insights come from pattern recognition and practical experience.
 
 Provide your response in 2-3 concise paragraphs with specific recommendations.
@@ -268,44 +268,35 @@ resource "aws_bedrockagent_agent" "supervisor" {
   agent_name              = local.name_prefix
   agent_resource_role_arn = aws_iam_role.agent_role.arn
   foundation_model        = var.bedrock_model
-  agent_collaboration     = "SUPERVISOR_ROUTER"
   instruction             = <<-EOT
-You are Judge, a wise coordinator who seeks counsel from expert advisors to make balanced decisions.
+You are Judge, a wise coordinator seeking counsel from expert advisors.
 
-When a question arrives:
-1. Consult BOTH Sage and Oracle to gather their perspectives.
-   - Ask Sage for philosophical wisdom and deeper meaning
-   - Ask Oracle for practical guidance and actionable steps
+Follow this 2-ROUND workflow for efficiency:
 
-2. After receiving both responses, you MUST:
-   - RATE each response on a scale of 1-10 for: Clarity, Depth, Actionability
-   - Provide a brief justification for each rating
-   - Synthesize their wisdom into a balanced final judgment
-   - Recommend a course of action that honors both perspectives
+ROUND 1 - GATHER PERSPECTIVES (PARALLEL):
+Delegate to BOTH Sage and Oracle simultaneously, asking each for their perspective on the question.
+Wait for both responses.
+
+ROUND 2 - CROSS-RATING (PARALLEL):
+After receiving both perspectives, delegate to BOTH advisors simultaneously:
+- Ask Sage: "Here is Oracle's response: [include Oracle's full response]. Please rate it 1-10 with a brief reason."
+- Ask Oracle: "Here is Sage's response: [include Sage's full response]. Please rate it 1-10 with a brief reason."
+
+FINAL SYNTHESIS:
+After receiving both cross-ratings, provide your balanced judgment.
 
 Format your final response as:
 
-**Sage's Response - Ratings:**
-- Clarity: [1-10] - [reason]
-- Depth: [1-10] - [reason]
-- Actionability: [1-10] - [reason]
-
-**Oracle's Response - Ratings:**
-- Clarity: [1-10] - [reason]
-- Depth: [1-10] - [reason]
-- Actionability: [1-10] - [reason]
-
-**Synthesis:**
-[Your balanced wisdom incorporating both perspectives]
-
-**Recommended Path:**
-[Specific next steps]
-
-Always consult both advisors. Always rate both responses before synthesizing.
+**Sage's Perspective:** [brief summary]
+**Oracle's Perspective:** [brief summary]
+**Cross-Ratings:** Sage rated Oracle [X]/10, Oracle rated Sage [Y]/10
+**Synthesis:** [your balanced judgment]
+**Recommended Path:** [specific next steps]
   EOT
 
-  # Using native collaboration - prepare after collaborators are associated
-  prepare_agent = false
+  # Using delegate action instead of native collaboration
+  # Prepare agent immediately since there are no collaborator connections
+  prepare_agent = false  # Will be prepared by action group
 
   tags = {
     ManagedBy       = "Bedsheet"
@@ -316,46 +307,25 @@ Always consult both advisors. Always rate both responses before synthesizing.
   }
 }
 
-# Native Bedrock collaborator associations
-resource "aws_bedrockagent_agent_collaborator" "sage" {
-  agent_id               = aws_bedrockagent_agent.supervisor.agent_id
-  agent_version          = "DRAFT"
-  collaborator_name      = "Sage"
-  collaboration_instruction = "A contemplative philosopher for wisdom and deeper meaning"
-  relay_conversation_history = "TO_COLLABORATOR"
+# Action Group for supervisor (separate resource)
+resource "aws_bedrockagent_agent_action_group" "supervisor_actions" {
+  action_group_name = "${local.name_prefix}_actions"
+  agent_id          = aws_bedrockagent_agent.supervisor.agent_id
+  agent_version     = "DRAFT"
 
-  agent_descriptor {
-    alias_arn = aws_bedrockagent_agent_alias.sage.agent_alias_arn
+  action_group_executor {
+    lambda = aws_lambda_function.action_lambda.arn
   }
+
+  api_schema {
+    payload = file("${path.module}/schemas/openapi.yaml")
+  }
+
+  prepare_agent = true
+  depends_on    = [aws_lambda_permission.bedrock_invoke]
 }
 
-resource "aws_bedrockagent_agent_collaborator" "oracle" {
-  agent_id               = aws_bedrockagent_agent.supervisor.agent_id
-  agent_version          = "DRAFT"
-  collaborator_name      = "Oracle"
-  collaboration_instruction = "A pragmatic advisor for practical guidance and actionable steps"
-  relay_conversation_history = "TO_COLLABORATOR"
-
-  agent_descriptor {
-    alias_arn = aws_bedrockagent_agent_alias.oracle.agent_alias_arn
-  }
-}
-
-# Prepare supervisor after collaborators are associated
-resource "null_resource" "prepare_supervisor" {
-  depends_on = [
-    aws_bedrockagent_agent_collaborator.sage,
-    aws_bedrockagent_agent_collaborator.oracle
-  ]
-
-  provisioner "local-exec" {
-    command = "aws bedrock-agent prepare-agent --agent-id ${aws_bedrockagent_agent.supervisor.agent_id}"
-  }
-
-  triggers = {
-    collaborators = "${aws_bedrockagent_agent_collaborator.sage.id}-${aws_bedrockagent_agent_collaborator.oracle.id}"
-  }
-}
+# Native Bedrock collaborator connections (only when delegate is disabled)
 
 resource "aws_bedrockagent_agent_alias" "supervisor" {
   agent_alias_name = "live"

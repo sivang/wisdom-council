@@ -40,7 +40,29 @@ def get_bedrock_client():
     return boto3.client('bedrock-agent-runtime', region_name=REGION)
 
 
-def extract_thinking_from_raw_response(raw_response: dict) -> list[str]:
+import re
+
+def strip_thinking_tags(text: str) -> str:
+    """Strip <thinking> tags from text and return the inner content."""
+    # Match <thinking>...</thinking> or just <thinking>... (unclosed)
+    pattern = r'<thinking>\s*(.*?)\s*(?:</thinking>|$)'
+    match = re.search(pattern, text, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    return text.strip()
+
+
+def normalize_for_comparison(text: str) -> str:
+    """Normalize text for duplicate comparison - strip tags and whitespace."""
+    # Strip thinking tags
+    text = strip_thinking_tags(text)
+    # Normalize whitespace
+    text = re.sub(r'\s+', ' ', text).strip()
+    # Take first 100 chars for comparison (enough to identify duplicates)
+    return text[:100].lower()
+
+
+def extract_thinking_from_raw_response(raw_response: dict, seen_thinking: set) -> list[str]:
     """
     Extract all thinking/reasoning content from modelInvocationOutput.rawResponse.
 
@@ -50,9 +72,10 @@ def extract_thinking_from_raw_response(raw_response: dict) -> list[str]:
 
     Args:
         raw_response: The rawResponse dict from modelInvocationOutput
+        seen_thinking: Set of normalized thinking texts already emitted (for deduplication)
 
     Returns:
-        List of thinking text strings found in the response
+        List of thinking text strings found in the response (deduplicated)
     """
     thinking_texts = []
 
@@ -86,7 +109,19 @@ def extract_thinking_from_raw_response(raw_response: dict) -> list[str]:
             if block.get('text') and not block.get('toolUse'):
                 text = block['text'].strip()
                 if text:
-                    thinking_texts.append(text)
+                    # Skip <answer> blocks - these are actual responses, not thinking
+                    # They will be captured by collaborator_complete events
+                    # Use lstrip() to handle leading whitespace
+                    text_stripped = text.lstrip()
+                    if text_stripped.startswith('<answer>') or text_stripped.startswith('<answer '):
+                        continue
+                    # Strip <thinking> tags if present
+                    clean_text = strip_thinking_tags(text)
+                    normalized = normalize_for_comparison(clean_text)
+                    # Only add if not already seen (deduplicate against rationale)
+                    if normalized and normalized not in seen_thinking:
+                        thinking_texts.append(clean_text)
+                        seen_thinking.add(normalized)
 
             # Source 2: reasoningContent.reasoningText.text (extended thinking)
             reasoning_content = block.get('reasoningContent')
@@ -95,7 +130,11 @@ def extract_thinking_from_raw_response(raw_response: dict) -> list[str]:
                 if isinstance(reasoning_text, dict) and reasoning_text.get('text'):
                     text = reasoning_text['text'].strip()
                     if text:
-                        thinking_texts.append(text)
+                        clean_text = strip_thinking_tags(text)
+                        normalized = normalize_for_comparison(clean_text)
+                        if normalized and normalized not in seen_thinking:
+                            thinking_texts.append(clean_text)
+                            seen_thinking.add(normalized)
 
     except (json.JSONDecodeError, TypeError, KeyError) as e:
         # Log but don't fail - raw response parsing is best-effort
@@ -134,6 +173,7 @@ async def stream_bedrock_events(
         full_response = ""
         last_call_id = None
         active_collaborators = {}  # Track collaborator call IDs
+        seen_thinking = set()  # Track emitted thinking for deduplication
 
         for event in response['completion']:
             # Handle text chunks
@@ -155,19 +195,25 @@ async def stream_bedrock_events(
                 if 'orchestrationTrace' in trace:
                     orch = trace['orchestrationTrace']
 
-                    # Source 1: Rationale field (agent reasoning - most common)
+                    # Source 1: Rationale field (agent reasoning - most common, preferred)
                     if 'rationale' in orch:
                         rationale = orch['rationale']
                         if 'text' in rationale:
-                            yield f"data: {json.dumps({'type': 'thinking', 'content': rationale['text'], 'agent_id': agent_id})}\n\n"
+                            rationale_text = rationale['text']
+                            # Add to seen set for deduplication
+                            normalized = normalize_for_comparison(rationale_text)
+                            if normalized not in seen_thinking:
+                                seen_thinking.add(normalized)
+                                yield f"data: {json.dumps({'type': 'thinking', 'content': rationale_text, 'agent_id': agent_id})}\n\n"
 
                     # Sources 2 & 3: Extract thinking from modelInvocationOutput.rawResponse
                     # This captures: reasoningContent.reasoningText.text AND leading text blocks
+                    # Only emits content not already seen from rationale (deduplication)
                     if 'modelInvocationOutput' in orch:
                         model_output = orch['modelInvocationOutput']
                         if 'rawResponse' in model_output:
                             raw_response = model_output['rawResponse']
-                            thinking_texts = extract_thinking_from_raw_response(raw_response)
+                            thinking_texts = extract_thinking_from_raw_response(raw_response, seen_thinking)
                             for thinking_text in thinking_texts:
                                 yield f"data: {json.dumps({'type': 'thinking', 'content': thinking_text, 'agent_id': agent_id, 'source': 'raw_response'})}\n\n"
 
@@ -211,6 +257,11 @@ async def stream_bedrock_events(
                             output_text = collab_output.get('output', {}).get('text', str(collab_output))
 
                             call_id = active_collaborators.get(collab_alias, 'unknown')
+
+                            # Add collaborator output to seen_thinking to prevent duplicates
+                            # (same content may appear as thinking event)
+                            normalized_output = normalize_for_comparison(output_text)
+                            seen_thinking.add(normalized_output)
 
                             # Emit collaborator_complete event
                             yield f"data: {json.dumps({'type': 'collaborator_complete', 'collaborator': collab_name, 'call_id': call_id, 'result': output_text[:500] + '...' if len(output_text) > 500 else output_text})}\n\n"

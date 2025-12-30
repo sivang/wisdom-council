@@ -6,7 +6,7 @@
 
 project_name   = "wisdom_council"
 region         = "eu-central-1"
-bedrock_model  = "anthropic.claude-sonnet-4-5-20250929-v1:0"
+bedrock_model  = "eu.anthropic.claude-sonnet-4-5-20250929-v1:0"
 
 # Enable delegate action for supervisor agents to improve trace visibility.
 # This provides better observability of supervisor reasoning in traces and Debug UI.

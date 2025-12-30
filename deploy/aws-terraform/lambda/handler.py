@@ -13,11 +13,12 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Bedrock Runtime client for delegate action
-bedrock_runtime = boto3.client('bedrock-agent-runtime', region_name='eu-central-1')
+bedrock_runtime = boto3.client('bedrock-agent-runtime', region_name=os.environ.get('AWS_REGION'))
 
 
-def delegate(agent_name: str = None, task: str = None, delegations: str = None) -> str:
+def delegate(agent_name: str, task: str) -> str:
     """Delegate task(s) to collaborator agent(s). Use agent_name+task for single delegation, or delegations array for parallel."""
+    logger.info(f"Delegating to {agent_name}: {task}")
 
     # Map collaborator names to their agent/alias ARNs (from environment variables)
     collaborators = {}
@@ -30,72 +31,33 @@ def delegate(agent_name: str = None, task: str = None, delegations: str = None) 
         "alias_id": os.environ.get("COLLABORATOR_ORACLE_ALIAS_ID"),
     }
 
-    def invoke_single(agent_name: str, task: str) -> str:
-        """Invoke a single collaborator agent."""
-        logger.info(f"Delegating to {agent_name}: {task}")
+    if agent_name not in collaborators:
+        return f"Unknown collaborator: {agent_name}. Available: {list(collaborators.keys())}"
 
-        if agent_name not in collaborators:
-            return f"Unknown collaborator: {agent_name}. Available: {list(collaborators.keys())}"
+    collab = collaborators[agent_name]
 
-        collab = collaborators[agent_name]
+    try:
+        # Invoke collaborator agent via Bedrock
+        response = bedrock_runtime.invoke_agent(
+            agentId=collab["agent_id"],
+            agentAliasId=collab["alias_id"],
+            sessionId=f"delegate-{agent_name}",
+            inputText=task
+        )
 
-        try:
-            # Invoke collaborator agent via Bedrock
-            response = bedrock_runtime.invoke_agent(
-                agentId=collab["agent_id"],
-                agentAliasId=collab["alias_id"],
-                sessionId=f"delegate-{agent_name}",
-                inputText=task
-            )
+        # Collect response from event stream
+        result = ""
+        for event in response['completion']:
+            if 'chunk' in event:
+                chunk = event['chunk']
+                if 'bytes' in chunk:
+                    result += chunk['bytes'].decode('utf-8')
 
-            # Collect response from event stream
-            result = ""
-            for event in response['completion']:
-                if 'chunk' in event:
-                    chunk = event['chunk']
-                    if 'bytes' in chunk:
-                        result += chunk['bytes'].decode('utf-8')
+        return result
 
-            return result
-
-        except Exception as e:
-            logger.exception(f"Failed to delegate to {agent_name}")
-            return f"Error delegating to {agent_name}: {str(e)}"
-
-    # Handle parallel delegation with delegations parameter
-    if delegations:
-        logger.info(f"Parallel delegation requested: {delegations}")
-        # Parse delegations string - Bedrock sends it as a string representation
-        # Format: "[{task=..., agent_name=Sage}, {task=..., agent_name=Oracle}]"
-        import re
-
-        # Extract individual delegation dicts
-        pattern = r'\{([^}]+)\}'
-        matches = re.findall(pattern, delegations)
-
-        results = []
-        for match in matches:
-            # Parse key=value pairs
-            pairs = {}
-            for pair in match.split(', '):
-                if '=' in pair:
-                    key, value = pair.split('=', 1)
-                    pairs[key.strip()] = value.strip()
-
-            if 'agent_name' in pairs and 'task' in pairs:
-                agent = pairs['agent_name']
-                task_text = pairs['task']
-                result = invoke_single(agent, task_text)
-                results.append(f"{agent}: {result}")
-
-        return "\n\n".join(results)
-
-    # Handle single delegation
-    elif agent_name and task:
-        return invoke_single(agent_name, task)
-
-    else:
-        return "Error: Must provide either (agent_name + task) or delegations parameter"
+    except Exception as e:
+        logger.exception(f"Failed to delegate to {agent_name}")
+        return f"Error delegating to {agent_name}: {str(e)}"
 
 
 
@@ -139,26 +101,10 @@ def lambda_handler(event: dict, context) -> dict:
             }
         }
 
-    # Extract parameters from requestBody or parameters
+    # Extract parameters
     params = {}
-    if "requestBody" in event:
-        # New format: requestBody with properties array
-        request_body = event["requestBody"]
-        if "content" in request_body:
-            content = request_body["content"]
-            if "application/json" in content:
-                json_content = content["application/json"]
-                # Bedrock sends properties as an array, not a dict
-                if "properties" in json_content:
-                    for prop in json_content["properties"]:
-                        params[prop["name"]] = prop["value"]
-                else:
-                    # If it's already a dict (shouldn't happen with Bedrock)
-                    params = json_content
-    else:
-        # Legacy format: parameters array
-        for param in event.get("parameters", []):
-            params[param["name"]] = param["value"]
+    for param in event.get("parameters", []):
+        params[param["name"]] = param["value"]
 
     # Execute action
     try:
