@@ -61,6 +61,32 @@ pip install bedsheet
 
 The project supports deployment via Terraform to AWS Bedrock Agents.
 
+### Prerequisites
+
+```bash
+# Install required tools
+brew install awscli
+brew install terraform
+
+# Configure AWS credentials
+aws configure
+# Enter your AWS Access Key ID, Secret Access Key, and region (eu-central-1)
+
+# Verify authentication
+aws sts get-caller-identity
+```
+
+Required AWS permissions:
+- Bedrock full access (for agents and model invocation)
+- IAM (for creating agent roles)
+- Lambda (for action group functions)
+- CloudWatch Logs (for agent logging)
+
+Enable Claude models in your region:
+1. Go to AWS Console → Amazon Bedrock → Model access
+2. Request access to Anthropic Claude models
+3. Wait for approval (usually instant for Claude Sonnet)
+
 ### Quick Start
 
 ```bash
