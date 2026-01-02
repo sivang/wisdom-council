@@ -291,7 +291,7 @@ make tf-apply   # Deploy!
 | Command | Description |
 |---------|-------------|
 | `make help` | Show all available commands |
-| `make setup` | Install dependencies (google-adk, bedsheet-agents) |
+| `make setup` | Install dependencies (google-adk, bedsheet) |
 | `make dev-ui-local` | Run ADK Dev UI locally (http://localhost:8000) |
 | `make test` | Test agent locally with ADK |
 | `make build` | Build Docker image |
