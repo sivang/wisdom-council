@@ -1,5 +1,7 @@
 # Wisdom Council
 
+![Digital Souls & Personas](DIGITAL%20SOULS%20&%20PERSONAS.png)
+
 A multi-agent AI system that provides balanced, thoughtful advice by coordinating multiple AI advisors with different perspectives.
 
 ## Overview
