@@ -136,15 +136,21 @@ wisdom-council/
 │   ├── sage.py       # Philosopher agent - wisdom and ethics
 │   └── oracle.py     # Pragmatist agent - practical advice
 ├── deploy/
-│   └── aws-terraform/
-│       ├── main.tf           # Main Terraform configuration
-│       ├── variables.tf      # Input variables
-│       ├── outputs.tf        # Output values
-│       ├── terraform.tfvars  # Your configuration (gitignored)
-│       ├── Makefile          # Deployment commands
-│       ├── lambda/           # Lambda function for agent actions
-│       ├── schemas/          # OpenAPI schemas for action groups
-│       └── debug-ui/         # Local testing UI
+│   ├── aws-terraform/
+│   │   ├── main.tf           # Main Terraform configuration
+│   │   ├── variables.tf      # Input variables
+│   │   ├── outputs.tf        # Output values
+│   │   ├── terraform.tfvars  # Your configuration (gitignored)
+│   │   ├── Makefile          # Deployment commands
+│   │   ├── lambda/           # Lambda function for agent actions
+│   │   ├── schemas/          # OpenAPI schemas for action groups
+│   │   └── debug-ui/         # Local testing UI
+│   └── gcp/                  # Generated via: bedsheet generate --target gcp
+│       ├── agent/            # ADK-compatible agent code
+│       ├── terraform/        # Cloud Run infrastructure
+│       ├── Dockerfile
+│       ├── Makefile
+│       └── cloudbuild.yaml
 ├── bedsheet.yaml     # Agent framework configuration
 └── README.md
 ```
@@ -179,6 +185,119 @@ To destroy all AWS resources:
 cd deploy/aws-terraform
 make destroy
 ```
+
+---
+
+## Deployment to GCP Cloud Run
+
+The project can also be deployed to Google Cloud Run via Terraform. This section guides you through using the bedsheet CLI to generate and deploy the GCP target.
+
+### Prerequisites
+
+```bash
+# Install required tools
+brew install terraform
+brew install google-cloud-sdk
+
+# Authenticate
+gcloud auth login
+gcloud auth application-default login
+
+# Set your project
+gcloud config set project your-gcp-project-id
+```
+
+Required GCP APIs:
+- Cloud Run Admin API
+- Secret Manager API
+- IAM API
+- Cloud Build API (optional, for CI/CD)
+
+### Step 1: Add GCP Target Configuration
+
+Add the `gcp` target to your `bedsheet.yaml`:
+
+```yaml
+targets:
+  # ... existing aws/aws-terraform targets ...
+  gcp:
+    project: your-gcp-project-id
+    region: europe-west1
+    cloud_run_memory: 512Mi
+    model: gemini-2.5-flash  # Or claude-sonnet-4-5@20250929 for Vertex AI Claude
+```
+
+### Step 2: Generate GCP Deployment Artifacts
+
+```bash
+# Validate configuration first
+bedsheet validate
+
+# Generate GCP deployment files
+bedsheet generate --target gcp
+```
+
+This creates `deploy/gcp/` with:
+- `agent/` - ADK-compatible agent code
+- `terraform/` - Infrastructure as Code (Cloud Run, IAM, Secrets)
+- `Dockerfile` - Container image definition
+- `cloudbuild.yaml` - Cloud Build configuration
+- `Makefile` - Deployment commands
+- `.github/workflows/` - CI/CD workflows
+
+### Step 3: Deploy to GCP
+
+```bash
+cd deploy/gcp
+
+# Configure your settings
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars with your GCP project details
+
+# Initialize and deploy
+make tf-init
+make tf-plan    # Review the changes
+make tf-apply   # Deploy!
+```
+
+### GCP Makefile Commands
+
+| Command | Description |
+|---------|-------------|
+| `make help` | Show all available commands |
+| `make setup` | Install dependencies (google-adk, bedsheet-agents) |
+| `make dev-ui-local` | Run ADK Dev UI locally (http://localhost:8000) |
+| `make test` | Test agent locally with ADK |
+| `make build` | Build Docker image |
+| `make deploy` | Deploy via Cloud Build (quick) |
+| `make deploy-terraform` | Deploy via Terraform (full IaC) |
+| `make tf-init` | Initialize Terraform |
+| `make tf-plan` | Plan infrastructure changes |
+| `make tf-apply` | Apply infrastructure changes |
+| `make tf-destroy` | Destroy all GCP resources |
+| `make logs` | View Cloud Run logs |
+
+### ADK Dev UI
+
+The Google Agent Development Kit includes a development UI for testing:
+
+```bash
+# Local development (requires GOOGLE_API_KEY for Gemini)
+make dev-ui-local
+
+# Or deploy a dev instance to Cloud Run
+make dev-ui
+```
+
+The Dev UI provides:
+- Chat interface for agent testing
+- Execution trace visualization
+- State inspector
+- Evaluation tools
+
+For more details, see the [Bedsheet Deployment Guide](https://sivang.github.io/bedsheet/deployment-guide.html).
+
+---
 
 ## License
 
